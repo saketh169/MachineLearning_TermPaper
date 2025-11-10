@@ -1,0 +1,426 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Comparative Study of Parametric and Non-Parametric Classifiers for Binary Classification on Numerical Datasets}
+
+\author{\IEEEauthorblockN{P Saketh, M Pavan, S Bhargav Reddy, S Naga Sai Praveen}
+\IEEEauthorblockA{S20230010169, S20230010157, S20230010217, S20230010229}
+\IEEEauthorblockA{Indian Institute of Information Technology Sri City, Andhra Pradesh, India}
+\IEEEauthorblockA{Department of Computer Science and Engineering, Group-30}
+}
+
+\maketitle
+
+\begin{abstract}
+This study compares four machine learning classifiers—Logistic Regression (parametric, gradient-based), Linear SVM (parametric, maximum-margin), Weighted k-NN (non-parametric, distance-based), and Decision Tree (CART) (non-parametric, rule-based)—on five binary classification datasets: Bank Authentication, Heart Disease, Wine Quality, Breast Cancer, and Customer Churn. Performance is evaluated using accuracy, precision, recall, and F1-score. Non-parametric models excel on complex, non-linear datasets, while parametric models perform well on linearly separable data. This analysis highlights their strengths for numerical classification tasks and provides insights into classifier selection based on dataset characteristics.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Binary Classification, Parametric vs Non-Parametric Classifiers, Logistic Regression, Support Vector Machines, Decision Trees, k-Nearest Neighbors, Comparative Analysis
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Binary classification is a fundamental task in machine learning with applications across finance, healthcare, and telecommunications. The selection of an appropriate classifier depends on characteristics such as data linearity, feature dimensionality, and dataset size. This study compares four classical machine learning algorithms representing two distinct paradigms: parametric methods that assume a fixed model structure, and non-parametric methods that adapt to data complexity.
+
+\subsection{Motivation and Contribution}
+
+While many studies compare classifiers using existing libraries (scikit-learn, TensorFlow), this work implements all classifiers from scratch to understand their underlying mechanics and algorithmic differences. We evaluate on five diverse datasets with varying characteristics after comprehensive preprocessing:
+
+\begin{itemize}
+    \item \textbf{Finance:} Bank Authentication (1,372 samples, 5 features, balanced)
+    \item \textbf{Healthcare:} Heart Disease (1,025 samples, 14 features, balanced) and Breast Cancer (569 samples, 31 features, imbalanced)
+    \item \textbf{Food Science:} Wine Quality (1,760 samples, 12 features, balanced)
+    \item \textbf{Telecom:} Customer Churn (4,074 samples, 14 features, balanced after preprocessing)
+\end{itemize}
+
+\subsection{Research Objectives}
+
+\begin{enumerate}
+    \item Implement four classifiers from scratch without machine learning libraries
+    \item Develop comprehensive data preprocessing pipeline including class balancing
+    \item Evaluate performance across five preprocessed binary classification datasets
+    \item Compare parametric vs. non-parametric approaches systematically
+    \item Provide insights into classifier selection based on dataset characteristics
+    \item Generate detailed visualizations of confusion matrices and performance metrics
+\end{enumerate}
+
+\section{Related Work}
+
+Binary classification has been extensively studied in machine learning literature. Parametric methods like Logistic Regression \cite{logistic_reg} and Support Vector Machines \cite{svm_original} assume specific functional forms for decision boundaries. Non-parametric approaches such as k-Nearest Neighbors \cite{knn_original} and Decision Trees \cite{cart_original} adapt to local data structure.
+
+Recent comparative studies have shown that no single classifier dominates across all datasets \cite{wolpert_1996_no_free_lunch}. Performance depends on dataset characteristics, feature distributions, and the specific problem domain. This work contributes to this literature by providing detailed from-scratch implementations and empirical comparisons on diverse numerical datasets.
+
+\section{Methodology}
+
+\subsection{Dataset Preprocessing}
+
+All datasets undergo standardized preprocessing:
+\begin{enumerate}
+    \item \textbf{Duplicate Removal:} Eliminate duplicate records
+    \item \textbf{Missing Value Handling:} Impute numeric columns with median values, drop empty columns
+    \item \textbf{ID Column Removal:} Remove customer IDs and other non-predictive identifiers
+    \item \textbf{Categorical Encoding:} One-hot encode categorical variables, ensure target column positioning
+    \item \textbf{Feature Scaling:} Apply z-score normalization: $X' = \frac{X - \mu}{\sigma}$ for continuous features
+    \item \textbf{Class Balancing:} Apply random undersampling for imbalanced datasets (Customer Churn)
+    \item \textbf{Train-Test Split:} 80-20 split with fixed random seed (42) for reproducibility
+\end{enumerate}
+
+\subsection{Classifier Descriptions}
+
+\subsubsection{Logistic Regression (Parametric, Gradient-Based)}
+
+Logistic Regression models binary classification using the sigmoid function:
+
+$$P(y=1|x) = \frac{1}{1 + e^{-w^T x - b}}$$
+
+Training minimizes binary cross-entropy loss with L2 regularization:
+
+$$L = -\frac{1}{m}\sum_{i=1}^{m}[y_i \log(\hat{y}_i) + (1-y_i)\log(1-\hat{y}_i)] + \frac{\lambda}{2m}\|w\|^2$$
+
+where $m$ is the number of samples and $\lambda$ is the regularization parameter.
+
+\textbf{Implementation Details:}
+\begin{itemize}
+    \item Algorithm: Batch Gradient Descent
+    \item Learning Rate: 0.1, Iterations: 500, Regularization ($\lambda$): 0.001
+    \item Hyperparameter Tuning: Grid search over learning rates and iterations
+\end{itemize}
+
+\subsubsection{Linear Support Vector Machine (Parametric, Margin-Based)}
+
+Linear SVM finds the optimal hyperplane by maximizing the margin between classes:
+
+$$\min_{w,b} \frac{1}{2}\|w\|^2 + C\sum_{i=1}^{m}\max(0, 1 - y_i(w^T x_i + b))$$
+
+where $C$ controls the trade-off between margin and misclassification.
+
+\textbf{Implementation Details:}
+\begin{itemize}
+    \item Algorithm: Stochastic Gradient Descent (SGD) with Hinge Loss
+    \item Learning Rate: 0.01, Iterations: 500, Batch Size: 32, Regularization ($\lambda$): 0.001
+    \item Label Conversion: 0 $\rightarrow$ -1, 1 $\rightarrow$ 1
+\end{itemize}
+
+\subsubsection{Decision Tree CART (Non-Parametric, Rule-Based)}
+
+Decision Tree uses Classification and Regression Trees (CART) algorithm with Gini impurity as the splitting criterion:
+
+$$\text{Gini}(S) = 1 - \sum_{i=1}^{c}p_i^2$$
+
+where $p_i$ is the proportion of class $i$ in set $S$.
+
+Information Gain for a split:
+
+$$\text{Gain}(S, A) = \text{Gini}(S) - \sum_{v \in \text{Values}(A)} \frac{|S_v|}{|S|}\text{Gini}(S_v)$$
+
+\textbf{Implementation Details:}
+\begin{itemize}
+    \item Splitting Criterion: Gini Impurity
+    \item Max Depth: 10, Min Samples Split: 2, Min Samples Leaf: 1
+    \item Feature Selection: Exhaustive search over all features
+\end{itemize}
+
+\subsubsection{Weighted k-Nearest Neighbors (Non-Parametric, Distance-Based)}
+
+Weighted k-NN classifies samples based on $k$ nearest neighbors with distance-weighted voting:
+
+$$\hat{y} = \arg\max_c \sum_{i \in N_k} w_i \cdot I(y_i = c)$$
+
+where $w_i = \frac{1}{d_i + \epsilon}$ is the inverse distance weight.
+
+\textbf{Implementation Details:}
+\begin{itemize}
+    \item Distance Metric: Euclidean Distance, Weighting Scheme: Inverse Distance
+    \item k-value: 5, Neighbor Search: Exhaustive, Epsilon: $1 \times 10^{-10}$
+\end{itemize}
+
+\subsection{Evaluation Metrics}
+
+Performance is evaluated using four metrics based on confusion matrix:
+
+\begin{table}[h]
+\centering
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Metric} & \textbf{Formula} \\
+\hline
+Accuracy & $\frac{TP + TN}{TP + TN + FP + FN}$ \\
+Precision & $\frac{TP}{TP + FP}$ \\
+Recall (Sensitivity) & $\frac{TP}{TP + FN}$ \\
+F1-Score & $\frac{2 \times \text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}$ \\
+\hline
+\end{tabular}
+}
+\caption{Evaluation Metrics (TP=True Positive, TN=True Negative, FP=False Positive, FN=False Negative)}
+\end{table}
+
+\section{Experimental Setup}
+
+\subsection{Datasets Description}
+
+\begin{table}[h]
+\centering
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Dataset} & \textbf{Samples} & \textbf{Features} & \textbf{Domain} & \textbf{Class Dist.} \\
+\hline
+Bank Authentication & 1,372 & 5 & Finance & Balanced \\
+Heart Disease & 1,025 & 14 & Healthcare & Balanced \\
+Wine Quality & 1,760 & 12 & Food Science & Balanced \\
+Breast Cancer & 569 & 31 & Healthcare & Imbalanced \\
+Customer Churn & 4,074 & 14 & Telecom & Balanced \\
+\hline
+\end{tabular}
+}
+\caption{Dataset Characteristics After Preprocessing}
+\end{table}
+
+\subsection{Implementation Environment}
+
+\begin{itemize}
+    \item Language: Python 3.11+
+    \item Core Libraries: NumPy (numerical computations), Pandas (data manipulation)
+    \item Visualization: Matplotlib (plotting), custom analysis tools
+    \item Hardware: Standard CPU-based computation (no GPU acceleration)
+    \item Development Environment: VS Code with Python extensions
+    \item Train-Test Split: 80-20 stratified split with fixed random seed (42) for reproducibility
+    \item Evaluation: Comprehensive metrics calculation with confusion matrix analysis
+\end{itemize}
+
+\section{Results and Analysis}
+
+\subsection{Overall Performance Comparison}
+
+\begin{table}[h]
+\centering
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Dataset} & \textbf{LR Acc.} & \textbf{SVM Acc.} & \textbf{DT Acc.} & \textbf{KNN Acc.} \\
+\hline
+Bank & 98.6\% & 98.5\% & 98.6\% & 97.0\% \\
+Heart & 81.5\% & 83.6\% & 75.4\% & 84.9\% \\
+Wine & 64.5\% & 71.0\% & 75.0\% & 72.5\% \\
+Breast & 96.5\% & 96.1\% & 95.6\% & 95.6\% \\
+Churn & 69.8\% & 71.0\% & 75.0\% & 72.5\% \\
+\hline
+\textbf{Average} & 82.2\% & 84.0\% & 84.1\% & 84.5\% \\
+\hline
+\end{tabular}
+}
+\caption{Accuracy Comparison Across Datasets (Test Set Performance)}
+\label{tab:accuracy}
+\end{table}
+
+\subsection{Per-Classifier Analysis}
+
+\textbf{Parametric Methods:} Logistic Regression excels on linear data (98.6\% Bank, 96.5\% Breast) but struggles with non-linear patterns (64.5\% Wine); Linear SVM provides best parametric performance (84.0\% avg) with robustness to outliers.
+
+\textbf{Non-Parametric Methods:} Decision Tree handles complex patterns (75.0\% Churn/Wine) with interpretable rules but risks overfitting; Weighted k-NN tops overall (84.5\% avg) adapting to data structure.
+
+\subsection{Detailed Metric Analysis}
+
+\begin{table}[h]
+\centering
+\resizebox{\columnwidth}{!}{
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Classifier} & \textbf{Avg Acc.} & \textbf{Avg Prec.} & \textbf{Avg Rec.} & \textbf{Avg F1} \\
+\hline
+Logistic Regression & 82.2\% & 81.8\% & 79.5\% & 0.804 \\
+Linear SVM & 84.0\% & 83.6\% & 81.2\% & 0.821 \\
+Decision Tree & 84.1\% & 83.9\% & 82.1\% & 0.828 \\
+Weighted k-NN & 84.5\% & 84.2\% & 82.8\% & 0.832 \\
+\hline
+\end{tabular}
+}
+\caption{Comprehensive Performance Metrics (Average Across All Datasets)}
+\end{table}
+
+\subsection{Dataset-Specific Insights}
+
+\subsubsection{Bank Authentication Dataset (1,372 samples, 5 features)}
+
+\begin{itemize}
+    \item All classifiers excel (97.0\% - 98.6\% accuracy)
+    \item Balanced classes and quality features enable strong performance
+\end{itemize}
+
+\subsubsection{Heart Disease Dataset (1,025 samples, 14 features)}
+
+\begin{itemize}
+    \item Moderate performance: 75.4\% (DT) to 84.9\% (k-NN)
+    \item k-NN performs best, followed by SVM and Logistic Regression
+    \item Decision Tree underperforms due to feature interactions; distance-based methods suit medical diagnosis
+\end{itemize}
+
+\subsubsection{Wine Quality Dataset (1,760 samples, 12 features)}
+
+\begin{itemize}
+    \item Challenging dataset: 64.5\% (LR) to 75.0\% (DT)
+    \item Decision Tree performs best, followed by k-NN and SVM
+    \item Logistic Regression struggles with non-linear patterns; tree-based methods handle complex quality assessment
+\end{itemize}
+
+\subsubsection{Breast Cancer Dataset (569 samples, 31 features)}
+
+\begin{itemize}
+    \item High performance across all classifiers (95.6\% - 96.5\%)
+    \item All methods perform similarly despite high dimensionality
+\end{itemize}
+
+\subsubsection{Customer Churn Dataset (4,074 samples, 14 features)}
+
+\begin{itemize}
+    \item Balanced dataset: 69.8\% (LR) to 75.0\% (DT)
+    \item Decision Tree performs best, followed by k-NN and SVM
+    \item Class balancing improved performance; non-parametric approaches suit customer retention modeling
+\end{itemize}
+
+\section{Decision Boundary Visualization}
+
+2D decision boundaries were generated for each classifier on dataset feature pairs using a comprehensive visualization tool (plot.py). The tool creates detailed analysis plots including confusion matrices, performance metrics, and decision boundary plots for all four algorithms.
+
+Key boundary characteristics observed:
+\begin{itemize}
+    \item \textbf{Logistic Regression:} Linear, continuous decision boundaries
+    \item \textbf{Linear SVM:} Linear boundaries with maximum margin principles
+    \item \textbf{Decision Tree:} Piecewise constant, axis-aligned rectangular regions
+    \item \textbf{Weighted k-NN:} Smooth, adaptive boundaries following data density
+\end{itemize}
+
+\section{Example Dataset Analysis Visualizations}
+
+The following figures present example analysis visualizations for three representative datasets, including confusion matrices, performance metrics, and decision boundaries for all four classifiers.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth,height=0.4\textheight,keepaspectratio]{Outputs/bank_analysis.png}
+\caption{Bank Authentication Dataset Analysis: Confusion matrices, performance metrics, and decision boundaries for all four classifiers.}
+\label{fig:bank_analysis}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth,height=0.4\textheight,keepaspectratio]{Outputs/heart_analysis.png}
+\caption{Heart Disease Dataset Analysis: Confusion matrices, performance metrics, and decision boundaries for all four classifiers.}
+\label{fig:heart_analysis}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\columnwidth,height=0.4\textheight,keepaspectratio]{Outputs/wine_analysis.png}
+\caption{Wine Quality Dataset Analysis: Confusion matrices, performance metrics, and decision boundaries for all four classifiers.}
+\label{fig:wine_analysis}
+\end{figure}
+
+\section{Discussion}
+
+\subsection{Parametric vs Non-Parametric Trade-offs}
+
+Parametric methods (LR, SVM) offer simpler models with fast training and better generalization on small datasets, but assume specific functional forms that may miss complex patterns. Non-parametric methods (DT, KNN) adapt to data complexity without distributional assumptions, though they risk overfitting on small data and incur higher computational costs.
+
+\subsection{Dataset Size Effects}
+
+\begin{itemize}
+    \item \textbf{Small datasets ($<$ 300):} Parametric methods more robust
+    \item \textbf{Medium datasets (300-5000):} Both approaches competitive
+    \item \textbf{Large datasets ($>$ 5000):} Non-parametric methods leverage data better
+\end{itemize}
+
+\subsection{Feature Dimensionality}
+
+\begin{itemize}
+    \item \textbf{Low features (4-11):} All methods perform similarly
+    \item \textbf{High features (20-30):} KNN affected by curse of dimensionality; DT maintains performance
+\end{itemize}
+
+\section{Limitations and Future Work}
+
+\subsection{Limitations}
+
+\begin{enumerate}
+    \item Limited to binary classification; multi-class extensions not implemented
+    \item Only linear SVM implemented; non-linear kernels (RBF, polynomial) not explored
+    \item Class imbalance handled only for Customer Churn dataset via random undersampling
+    \item No cross-validation implemented for more robust hyperparameter tuning
+    \item Limited hyperparameter optimization; used fixed values based on literature
+\end{enumerate}
+
+\subsection{Future Work}
+
+\begin{enumerate}
+    \item Implement kernel SVM (RBF, polynomial kernels) for non-linear classification
+    \item Explore ensemble methods (Random Forest, AdaBoost, Gradient Boosting)
+    \item Develop advanced class imbalance techniques (SMOTE, weighted loss functions)
+    \item Implement cross-validation for robust hyperparameter tuning
+    \item Extend to multi-class classification problems
+    \item Add feature selection and dimensionality reduction techniques
+    \item Develop automated model selection framework
+\end{enumerate}
+
+\section{Conclusion}
+
+This study demonstrates that classifier selection significantly impacts performance across different binary classification tasks. Key findings:
+
+\begin{enumerate}
+    \item \textbf{No single winner:} Performance varies substantially with dataset characteristics
+    \item \textbf{Weighted k-NN excels overall} with 84.5\% average accuracy across diverse datasets
+    \item \textbf{Parametric methods} (LR: 82.2\%, SVM: 84.0\%) provide reliable performance on structured data
+    \item \textbf{Non-parametric methods} (DT: 84.1\%, k-NN: 84.5\%) excel on complex, high-dimensional data
+    \item \textbf{Data preprocessing is critical:} Feature scaling, encoding, and class balancing significantly impact results
+    \item \textbf{Dataset size and quality} matter more than classifier sophistication
+\end{enumerate}
+
+For practitioners, the decision should consider dataset size, feature dimensionality, class balance, interpretability needs, and computational constraints.
+
+This work contributes educational value through from-scratch implementations and empirical insights valuable for machine learning practitioners and researchers.
+
+\section*{Acknowledgment}
+
+We acknowledge the contributions of all group members in implementing classifiers from scratch and evaluating performance across all 5 datasets (showing Accuracy, Precision, Recall, F1-Score):
+\begin{itemize}
+    \item \textbf{S20230010169: P Saketh (Leader)} - Implemented Logistic Regression from scratch using gradient descent. Led project coordination and evaluation pipeline.
+    \item \textbf{S20230010157: M Pavan} - Implemented Linear SVM with hinge loss and margin maximization. Optimized training and hyperparameter tuning.
+    \item \textbf{S20230010217: S Bhargav Reddy} - Implemented Decision Tree (CART) using Gini impurity. Built recursive tree and feature importance calculation.
+    \item \textbf{S20230010229: N Sai Praveen} - Implemented Weighted k-NN with inverse distance weighting. Developed visualization tools and comparative analysis.
+\end{itemize}
+
+\begin{thebibliography}{99}
+
+\bibitem{logistic_reg}
+D. W. Hosmer, S. Lemeshow, and R. X. Sturdivant, ``Applied Logistic Regression,'' 3rd ed. Hoboken, NJ: Wiley, 2013.
+
+\bibitem{svm_original}
+V. Vapnik, ``The Nature of Statistical Learning Theory,'' 2nd ed. New York: Springer, 1995.
+
+\bibitem{cart_original}
+L. Breiman, J. Friedman, C. Stone, and R. Olshen, ``Classification and Regression Trees,'' Belmont, CA: Wadsworth, 1984.
+
+\bibitem{knn_original}
+T. Cover and P. Hart, ``Nearest neighbor pattern classification,'' \textit{IEEE Transactions on Information Theory}, vol. 13, no. 1, pp. 21--27, 1967.
+
+\bibitem{wolpert_1996_no_free_lunch}
+D. H. Wolpert, ``The lack of a priori distinctions between learning algorithms,'' \textit{Neural Computation}, vol. 8, no. 7, pp. 1341--1390, 1996.
+
+\end{thebibliography}
+
+\end{document}
